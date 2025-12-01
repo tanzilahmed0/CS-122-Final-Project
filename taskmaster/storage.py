@@ -173,6 +173,7 @@ def get_tasks_for_user(user_id):
         list[Task]: List of Task objects for the user
     """
     from taskmaster.models import Task
+    from datetime import datetime
     
     conn = db_manager.get_connection()
     cursor = conn.cursor()
@@ -188,11 +189,19 @@ def get_tasks_for_user(user_id):
     
     tasks = []
     for row in rows:
+        # Convert due_date string back to datetime if present
+        due_date = None
+        if row[4]:
+            try:
+                due_date = datetime.fromisoformat(row[4])
+            except (ValueError, AttributeError):
+                due_date = None
+        
         task = Task(
             user_id=row[1],
             title=row[2],
             description=row[3],
-            due_date=row[4],
+            due_date=due_date,
             priority=row[5],
             status=row[6],
             category=row[7],

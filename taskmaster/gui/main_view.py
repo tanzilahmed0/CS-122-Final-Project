@@ -2,6 +2,8 @@
 
 import tkinter as tk
 from tkinter import ttk
+from taskmaster.storage import get_tasks_for_user
+from taskmaster.app_state import app_state
 
 
 class MainView(tk.Frame):
@@ -100,6 +102,14 @@ class MainView(tk.Frame):
                 task.category or ""
             ))
     
+    def refresh_tasks(self):
+        """Reload tasks from database and update the view."""
+        # Reload tasks from database
+        app_state.tasks = get_tasks_for_user(app_state.current_user.id)
+        
+        # Update the display
+        self.populate_tasks(app_state.tasks)
+    
     def _on_add_task(self):
         """Handle Add Task button (no logic yet)."""
         pass
@@ -117,8 +127,8 @@ class MainView(tk.Frame):
         pass
     
     def _on_refresh(self):
-        """Handle Refresh button (no logic yet)."""
-        pass
+        """Handle Refresh button."""
+        self.refresh_tasks()
     
     def _on_reports(self):
         """Handle Reports button (no logic yet)."""
