@@ -75,6 +75,31 @@ class MainView(tk.Frame):
         tk.Button(button_frame, text="Refresh", command=self._on_refresh).pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="Reports", command=self._on_reports).pack(side=tk.LEFT, padx=5)
     
+    def populate_tasks(self, tasks):
+        """
+        Display a list of tasks in the Treeview.
+        
+        Args:
+            tasks: List of Task objects to display
+        """
+        # Clear existing rows
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        
+        # Insert new rows
+        for task in tasks:
+            # Format due date
+            due_date_str = task.due_date.strftime("%Y-%m-%d") if task.due_date else ""
+            
+            # Insert row with task data
+            self.tree.insert("", tk.END, iid=str(task.id), values=(
+                task.title,
+                due_date_str,
+                task.priority,
+                task.status,
+                task.category or ""
+            ))
+    
     def _on_add_task(self):
         """Handle Add Task button (no logic yet)."""
         pass
