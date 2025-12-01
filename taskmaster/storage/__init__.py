@@ -1,2 +1,0 @@
-# Persistence: file/DB access
-

@@ -1,2 +1,2 @@
-# Paths, DB file name, app constants
+# App-wide constants, DB path
 

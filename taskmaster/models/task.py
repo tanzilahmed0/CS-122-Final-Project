@@ -1,2 +1,0 @@
-# Task, CourseTask, PersonalTask
-

@@ -1,2 +1,2 @@
-# Entry point: launches the GUI app
+# Entry point: starts the GUI app
 

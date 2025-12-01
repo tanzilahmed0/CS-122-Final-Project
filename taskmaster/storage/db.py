@@ -1,2 +1,0 @@
-# DatabaseManager: SQLite connection + schema
-
