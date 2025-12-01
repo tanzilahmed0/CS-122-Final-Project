@@ -1,0 +1,2 @@
+# BaseModel, shared behavior (inheritance)
+
