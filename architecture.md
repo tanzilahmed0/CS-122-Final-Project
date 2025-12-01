@@ -19,3 +19,39 @@ CS-122-FINAL-PROJECT/
       ├─ main_view.py         # Main task list view (CRUD + filters)
       ├─ task_form.py         # Add/Edit task dialog
       └─ reports_view.py      # Simple stats/visual report screen
+
+
+## File Responsibilities
+
+### config.py
+Holds DB path, priorities/status constants, and categories.
+
+### models.py
+Defines BaseModel, User, Task. Handles validation and encapsulation.
+
+### storage.py
+SQLite logic: initializing DB and CRUD functions for users and tasks.
+
+### app_state.py
+Holds the global in-memory state: current_user and tasks.
+
+### reports.py
+Computes simple statistics: count_by_status and count_by_category.
+
+### utils.py
+Helper functions like parse_due_date and logging setup.
+
+### gui/app.py
+Creates the Tk root window, initializes DB, and switches between screens.
+
+### gui/login_view.py
+Username entry screen for basic multi-user login.
+
+### gui/main_view.py
+Main task list UI with CRUD, filters, and buttons.
+
+### gui/task_form.py
+Popup dialog to add or edit a task.
+
+### gui/reports_view.py
+Simple popup showing stats about tasks.

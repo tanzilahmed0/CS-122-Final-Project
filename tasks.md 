@@ -1,0 +1,641 @@
+# Task Master – MVP Build Plan (Trimmed Architecture)
+
+Each task:
+- Focuses on one concern.
+- Has a clear start and end.
+- Is testable immediately after completion.
+
+This plan assumes the simplified architecture:
+
+- `taskmaster-project/`
+  - `run.py`
+  - `data/taskmaster.db`
+  - `taskmaster/`
+    - `config.py`, `models.py`, `storage.py`, `app_state.py`, `reports.py`, `utils.py`
+    - `gui/app.py`, `gui/login_view.py`, `gui/main_view.py`, `gui/task_form.py`, `gui/reports_view.py`
+
+---
+
+## Phase 0 – Scaffolding
+
+### Task 1 – Create project structure and empty modules
+
+**Goal:** Have folders and empty files in place.
+
+- Create `taskmaster-project/` with:
+  - `run.py`
+  - `data/` (empty)
+  - `taskmaster/` with `__init__.py`
+  - Inside `taskmaster/`: `config.py`, `models.py`, `storage.py`, `app_state.py`, `reports.py`, `utils.py`
+  - Inside `taskmaster/gui/`: `__init__.py`, `app.py`, `login_view.py`, `main_view.py`, `task_form.py`, `reports_view.py`
+
+**Verify:**  
+`python -c "import taskmaster"` runs without error from the project root.
+
+---
+
+### Task 2 – Add basic README and requirements skeleton
+
+**Goal:** Have minimal documentation and dependency list.
+
+- Add a simple `README.md` with:
+  - Project name
+  - One-line description
+  - Command to run: `python run.py`
+- Create `requirements.txt` (can be empty or just `matplotlib` if you plan to use charts).
+
+**Verify:**  
+Open `README.md` and confirm content; `pip install -r requirements.txt` should succeed.
+
+---
+
+## Phase 1 – Core Configuration & Utilities
+
+### Task 3 – Implement `config.py` paths and constants
+
+**Goal:** Centralize DB path and task constants.
+
+- In `taskmaster/config.py`, define:
+  - `BASE_DIR`, `DATA_DIR`, `DB_PATH` using `os.path`.
+  - `PRIORITIES = ["Low", "Medium", "High"]`
+  - `STATUSES = ["Pending", "Completed"]`
+  - Optional: `CATEGORIES = ["School", "Work", "Personal"]`
+
+**Verify:**  
+`python -c "from taskmaster.config import DB_PATH, PRIORITIES; print(DB_PATH, PRIORITIES)"` prints expected values.
+
+---
+
+### Task 4 – Implement basic logging in `utils.py`
+
+**Goal:** Minimal logging facility for debugging.
+
+- In `taskmaster/utils.py`:
+  - Configure `logging.basicConfig(level=logging.INFO)`.
+  - Create a module-level logger: `logger = logging.getLogger("taskmaster")`.
+
+**Verify:**  
+`python -c "from taskmaster.utils import logger; logger.info('test log'); print('ok')"` runs without error.
+
+---
+
+### Task 5 – Implement `parse_due_date` helper
+
+**Goal:** Convert string input into a `datetime` or `None`.
+
+- In `taskmaster/utils.py`:
+  - Implement `parse_due_date(text: str)`:
+    - Trim string; if empty, return `None`.
+    - Try parsing with a simple format like `%Y-%m-%d`.
+    - On failure, return `None` (no raising needed for MVP).
+
+**Verify:**  
+`python -c "from taskmaster.utils import parse_due_date; print(parse_due_date('2025-01-01'))"` prints a datetime-like object.
+
+---
+
+## Phase 2 – Models (OOP)
+
+### Task 6 – Implement `BaseModel` in `models.py`
+
+**Goal:** Base class for shared fields and behavior.
+
+- In `taskmaster/models.py`:
+  - Define `class BaseModel` with attributes: `id`, `created_at`, `updated_at`.
+  - Initialize `created_at` and `updated_at` to current UTC if not provided.
+  - Implement `touch()` to update `updated_at`.
+  - Implement `to_dict()` returning a dictionary of these fields.
+
+**Verify:**  
+`python -c "from taskmaster.models import BaseModel; b=BaseModel(); print(b.to_dict())"` prints a dict without error.
+
+---
+
+### Task 7 – Implement `User` model
+
+**Goal:** Represent a user profile.
+
+- In `taskmaster/models.py`:
+  - Define `class User(BaseModel)`:
+    - Fields: `username`, `display_name`.
+    - Normalize `username` (e.g., strip whitespace, lower-case).
+    - Implement `__repr__` or `__str__` for debugging.
+
+**Verify:**  
+`python -c "from taskmaster.models import User; u=User(username='Alice', display_name='Alice'); print(u)"` prints something meaningful.
+
+---
+
+### Task 8 – Implement `Task` model
+
+**Goal:** Represent an individual task.
+
+- In `taskmaster/models.py`:
+  - Define `class Task(BaseModel)`:
+    - Fields: `user_id`, `title`, `description`, `due_date`, `priority`, `status`, `category`.
+    - Validate `priority` against `config.PRIORITIES`; fallback to `"Medium"` if invalid.
+    - Validate `status` against `config.STATUSES`; fallback to `"Pending"` if invalid.
+    - Implement `mark_completed()` to set `status` to `"Completed"` and call `touch()`.
+    - Implement `is_overdue(now)` that returns `True` if:
+      - `status` is not `"Completed"`, and
+      - `due_date` is set and before `now`.
+
+**Verify:**  
+`python -c "from taskmaster.models import Task; t=Task(user_id=1, title='X', description='', due_date=None, priority='High', status='Pending', category='School'); print(t.priority, t.status)"` prints `High Pending`.
+
+---
+
+## Phase 3 – Storage & Persistence
+
+### Task 9 – Implement `DatabaseManager.get_connection`
+
+**Goal:** Basic SQLite connection logic.
+
+- In `taskmaster/storage.py`:
+  - Import `sqlite3` and `DB_PATH`.
+  - Implement `class DatabaseManager` with:
+    - `__init__(self, db_path: str)` storing `db_path`.
+    - `get_connection(self)` returning `sqlite3.connect(self.db_path)`.
+  - Create a module-level `db_manager = DatabaseManager(DB_PATH)`.
+
+**Verify:**  
+`python -c "from taskmaster.storage import db_manager; conn = db_manager.get_connection(); print(conn); conn.close()"` prints a connection.
+
+---
+
+### Task 10 – Implement `init_db` to create tables
+
+**Goal:** Create `users` and `tasks` tables if they don’t exist.
+
+- In `taskmaster/storage.py`:
+  - Add `init_db()` function or `DatabaseManager.init_db(self)`:
+    - Ensure `DATA_DIR` exists.
+    - Use a connection to run `CREATE TABLE IF NOT EXISTS users (...)`.
+    - Use a connection to run `CREATE TABLE IF NOT EXISTS tasks (...)`.
+
+**Verify:**  
+`python - << 'EOF'
+from taskmaster.storage import db_manager
+db_manager.init_db()
+import sqlite3
+from taskmaster.config import DB_PATH
+conn = sqlite3.connect(DB_PATH)
+print(conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall())
+conn.close()
+EOF`  
+You should see `users` and `tasks` in the list.
+
+---
+
+### Task 11 – Implement `create_user` helper
+
+**Goal:** Insert a new user into the database.
+
+- In `taskmaster/storage.py`:
+  - Implement `create_user(user: User) -> User`:
+    - Insert into `users` (username, display_name, created_at, updated_at).
+    - Set `user.id` using `cursor.lastrowid`.
+    - Return the `user`.
+
+**Verify:**  
+`python - << 'EOF'
+from taskmaster.storage import db_manager, create_user
+from taskmaster.models import User
+db_manager.init_db()
+u = User(username='testuser', display_name='Test User')
+create_user(u)
+print(u.id)
+EOF`  
+Should print a numeric id.
+
+---
+
+### Task 12 – Implement `get_user_by_username` helper
+
+**Goal:** Fetch a user by username.
+
+- In `taskmaster/storage.py`:
+  - Implement `get_user_by_username(username: str) -> User | None`:
+    - Query `users` by username.
+    - If a row is found, build and return a `User`.
+    - If not, return `None`.
+
+**Verify:**  
+Create a user with `create_user`, then call `get_user_by_username` and print the returned user.
+
+---
+
+### Task 13 – Implement `create_task` helper
+
+**Goal:** Insert a new task into the database.
+
+- In `taskmaster/storage.py`:
+  - Implement `create_task(task: Task) -> Task`:
+    - Insert into `tasks` with columns corresponding to `Task` fields.
+    - Set `task.id` from `cursor.lastrowid`.
+    - Return `task`.
+
+**Verify:**  
+Create a user, then create a `Task` for that user and confirm `task.id` is set.
+
+---
+
+### Task 14 – Implement `get_tasks_for_user` helper
+
+**Goal:** Load all tasks for a given user.
+
+- In `taskmaster/storage.py`:
+  - Implement `get_tasks_for_user(user_id: int) -> list[Task]`:
+    - Query `tasks` where `user_id = ?`.
+    - For each row, construct a `Task` object and return as a list.
+
+**Verify:**  
+Create multiple tasks for a user, then call `get_tasks_for_user` and print the number and titles.
+
+---
+
+### Task 15 – Implement `update_task` helper
+
+**Goal:** Update an existing task.
+
+- In `taskmaster/storage.py`:
+  - Implement `update_task(task: Task) -> None`:
+    - Use `task.id` to `UPDATE` the corresponding row in `tasks`.
+
+**Verify:**  
+Create a task, change its `title`, call `update_task`, reload with `get_tasks_for_user`, and confirm the new title.
+
+---
+
+### Task 16 – Implement `delete_task` helper
+
+**Goal:** Delete a task by id.
+
+- In `taskmaster/storage.py`:
+  - Implement `delete_task(task_id: int) -> None`:
+    - Execute `DELETE FROM tasks WHERE id = ?`.
+
+**Verify:**  
+Create a task, call `delete_task(task.id)`, then `get_tasks_for_user` and confirm it no longer appears.
+
+---
+
+## Phase 4 – App State & Reports
+
+### Task 17 – Implement `AppState` and `app_state`
+
+**Goal:** Central in-memory state container.
+
+- In `taskmaster/app_state.py`:
+  - Implement `class AppState` with:
+    - `current_user` (initially `None`).
+    - `tasks` (initially empty list).
+  - Create a module-level `app_state = AppState()`.
+
+**Verify:**  
+`python -c "from taskmaster.app_state import app_state; print(app_state.current_user, app_state.tasks)"` prints `None []`.
+
+---
+
+### Task 18 – Implement `count_by_status` in `reports.py`
+
+**Goal:** Compute status counts from a list of tasks.
+
+- In `taskmaster/reports.py`:
+  - Implement `count_by_status(tasks)` returning a dict like `{"Pending": n1, "Completed": n2}`.
+
+**Verify:**  
+Create a fake list of `Task` objects in a quick script and call `count_by_status`; print the result.
+
+---
+
+### Task 19 – Implement `count_by_category` in `reports.py`
+
+**Goal:** Compute category counts from a list of tasks.
+
+- In `taskmaster/reports.py`:
+  - Implement `count_by_category(tasks)` returning a dict mapping category to count.
+
+**Verify:**  
+Create tasks with various categories and confirm the counts.
+
+---
+
+## Phase 5 – Basic GUI Shell
+
+### Task 20 – Implement bare `main()` in `gui/app.py`
+
+**Goal:** Show an empty Tk window.
+
+- In `taskmaster/gui/app.py`:
+  - Implement `main()`:
+    - Create `Tk()` root.
+    - Set title (e.g., `"Task Master"`).
+    - Call `root.mainloop()`.
+
+- In `run.py`, import and call `main()` in the `if __name__ == "__main__":` block.
+
+**Verify:**  
+`python run.py` opens a blank window.
+
+---
+
+### Task 21 – Initialize DB in `main()`
+
+**Goal:** Ensure DB exists before GUI starts.
+
+- In `taskmaster/gui/app.py`:
+  - Before creating the root window, call `db_manager.init_db()` from `storage.py`.
+
+**Verify:**  
+Delete `data/taskmaster.db` if it exists, then run `python run.py`; confirm the DB file is recreated.
+
+---
+
+## Phase 6 – Login Screen
+
+### Task 22 – Implement `LoginView` UI layout
+
+**Goal:** Basic login form, no logic yet.
+
+- In `taskmaster/gui/login_view.py`:
+  - Implement `class LoginView(tk.Frame)` with:
+    - A label (“Enter username”),
+    - An `Entry` for username,
+    - A “Login” button.
+  - Accept `on_login_success` callback in `__init__` and store it (do not call yet).
+
+**Verify:**  
+Modify `main()` to instantiate `LoginView` and pack it; run app and visually confirm the layout.
+
+---
+
+### Task 23 – Wire `LoginView` to storage + app_state
+
+**Goal:** Implement login behavior.
+
+- In `LoginView`:
+  - On “Login” button click:
+    - Read username from `Entry`.
+    - Use `get_user_by_username`; if `None`, create via `create_user`.
+    - Set `app_state.current_user`.
+    - Call `on_login_success()`.
+
+**Verify:**  
+Temporary `on_login_success` can just print `app_state.current_user` to console; run the app, type a username, click Login, and confirm print.
+
+---
+
+## Phase 7 – Main Task View
+
+### Task 24 – Implement `MainView` UI skeleton
+
+**Goal:** Layout for task list and buttons, no logic yet.
+
+- In `taskmaster/gui/main_view.py`:
+  - Implement `class MainView(tk.Frame)` with:
+    - `ttk.Treeview` with columns: Title, Due Date, Priority, Status, Category.
+    - Buttons: “Add Task”, “Edit Task”, “Delete Task”, “Complete Task”, “Refresh”, “Reports”.
+    - Optional dropdowns: Status filter, Priority filter (no logic yet).
+
+**Verify:**  
+Create a small test script that shows `MainView` and confirm the UI renders.
+
+---
+
+### Task 25 – Implement `populate_tasks` in `MainView`
+
+**Goal:** Display a list of tasks.
+
+- In `MainView`:
+  - Add method `populate_tasks(tasks)`:
+    - Clears existing rows from the Treeview.
+    - Inserts one row per `Task`, using task attributes as column values.
+    - Store the task `id` in the Treeview item (e.g., as `iid` or in a hidden column).
+
+**Verify:**  
+In a test script, create some dummy `Task` objects and call `populate_tasks`; confirm they appear.
+
+---
+
+### Task 26 – Switch from `LoginView` to `MainView` in `app.main`
+
+**Goal:** Navigate to main view after login.
+
+- In `gui/app.py`:
+  - Create `LoginView` first.
+  - Define `on_login_success` that:
+    - Loads tasks for `app_state.current_user` using `get_tasks_for_user`.
+    - Sets `app_state.tasks`.
+    - Hides/destroys `LoginView`.
+    - Creates `MainView`, packs it, and calls `populate_tasks(app_state.tasks)`.
+
+**Verify:**  
+Run app, login, and confirm `MainView` appears with any existing tasks (or empty list).
+
+---
+
+### Task 27 – Implement “Refresh” button behavior
+
+**Goal:** Reload tasks from DB into the view.
+
+- In `MainView`:
+  - Implement `refresh_tasks()`:
+    - Use `get_tasks_for_user(app_state.current_user.id)` to reload tasks.
+    - Set `app_state.tasks`.
+    - Call `populate_tasks(app_state.tasks)`.
+  - Wire the “Refresh” button to `refresh_tasks()`.
+
+**Verify:**  
+Create a task directly with a small script, start app, login, and click Refresh; the new task should appear.
+
+---
+
+## Phase 8 – Task Form (Add/Edit)
+
+### Task 28 – Implement `TaskForm` UI for add mode
+
+**Goal:** Dialog to create a new task.
+
+- In `taskmaster/gui/task_form.py`:
+  - Implement `class TaskForm(tk.Toplevel)` with fields:
+    - Entries for title, description, due date, category.
+    - Dropdown for priority using `PRIORITIES`.
+    - “Save” and “Cancel” buttons.
+  - Accept `on_save` callback in constructor and store it.
+  - For now, do not persist anything; just build the UI skeleton.
+
+**Verify:**  
+From a small test script, open a `TaskForm` from a root window and confirm the layout.
+
+---
+
+### Task 29 – Implement add mode save logic in `TaskForm`
+
+**Goal:** Create a task via storage and update `app_state.tasks`.
+
+- In `TaskForm`:
+  - Add an optional `task` parameter to `__init__`, default `None`.
+  - If `task` is `None` (add mode):
+    - On “Save”:
+      - Read fields.
+      - Use `parse_due_date` for due date.
+      - Create a `Task` for `app_state.current_user.id`.
+      - Call `create_task(task)` from `storage`.
+      - Append the task to `app_state.tasks`.
+      - Call `on_save()` if provided.
+      - Close the dialog with `self.destroy()`.
+
+**Verify:**  
+In a test script, login a user, open `TaskForm`, save a task, and check `app_state.tasks` length increased.
+
+---
+
+### Task 30 – Wire “Add Task” button to `TaskForm`
+
+**Goal:** Trigger add-task flow from `MainView`.
+
+- In `MainView`:
+  - Wire “Add Task” button to a callback that:
+    - Creates `TaskForm(self, on_save=self.refresh_tasks)` (or similar).
+  - Ensure `refresh_tasks()` is available on `MainView`.
+
+**Verify:**  
+Run app, login, click “Add Task”, fill and save; the new task should appear in the list.
+
+---
+
+### Task 31 – Implement helper to get selected `Task` in `MainView`
+
+**Goal:** Locate `Task` object for the selected row.
+
+- In `MainView`:
+  - Implement `get_selected_task()`:
+    - Get selected item from Treeview.
+    - Retrieve the stored `task_id`.
+    - Find the corresponding `Task` in `app_state.tasks` and return it (or `None` if nothing selected).
+
+**Verify:**  
+Select a row and print `get_selected_task()` in a temporary debug button or log.
+
+---
+
+### Task 32 – Implement edit mode in `TaskForm`
+
+**Goal:** Allow editing an existing task.
+
+- In `TaskForm`:
+  - If a `task` is passed in:
+    - Pre-fill all fields from the `task`.
+    - On “Save”:
+      - Update `task` attributes from the form.
+      - Call `update_task(task)` from `storage`.
+      - Call `task.touch()` if needed.
+      - Call `on_save()` and close dialog.
+
+**Verify:**  
+Create a task, open `TaskForm(task=...)` from a test script, change the title, save, and confirm DB and `app_state.tasks` reflect the new title.
+
+---
+
+### Task 33 – Wire “Edit Task” button to open `TaskForm` in edit mode
+
+**Goal:** Edit selected task from main view.
+
+- In `MainView`:
+  - Wire “Edit Task” button:
+    - Use `get_selected_task()`.
+    - If a task is selected, open `TaskForm(self, task=selected_task, on_save=self.refresh_tasks)`.
+
+**Verify:**  
+Run app, add a task, select it, click “Edit Task”, change it, save, and confirm the change in the list.
+
+---
+
+## Phase 9 – Delete & Complete
+
+### Task 34 – Wire “Delete Task” button
+
+**Goal:** Delete the selected task from DB and UI.
+
+- In `MainView`:
+  - Wire “Delete Task” button to:
+    - Get selected task via `get_selected_task()`.
+    - If present:
+      - Call `delete_task(task.id)` from `storage`.
+      - Remove it from `app_state.tasks` (or call `refresh_tasks()`).
+      - Refresh the Treeview.
+
+**Verify:**  
+Run app, add a task, delete it, and confirm it disappears and is removed from DB.
+
+---
+
+### Task 35 – Wire “Complete Task” button
+
+**Goal:** Mark the selected task as completed.
+
+- In `MainView`:
+  - Wire “Complete Task” button to:
+    - Get selected task via `get_selected_task()`.
+    - If present:
+      - Call `task.mark_completed()`.
+      - Call `update_task(task)` from `storage`.
+      - Refresh tasks via `refresh_tasks()`.
+
+**Verify:**  
+Run app, add a task, select it, click “Complete Task”, and confirm status updates to “Completed”.
+
+---
+
+## Phase 10 – Filtering & Reports
+
+### Task 36 – Implement simple filtering in `MainView`
+
+**Goal:** Filter tasks in memory by status and/or priority.
+
+- In `MainView`:
+  - Ensure you have dropdowns for Status and Priority (with “All” option).
+  - Implement a method `get_filtered_tasks()`:
+    - Start with `app_state.tasks`.
+    - If Status filter != “All”, keep only matching status.
+    - If Priority filter != “All”, keep only matching priority.
+    - Return filtered list.
+  - Update `refresh_tasks()` to:
+    - Reload `app_state.tasks` from DB.
+    - Call `get_filtered_tasks()` and pass the result to `populate_tasks()`.
+
+**Verify:**  
+Run app, create tasks with different statuses/priorities, change filters, click Refresh, and confirm the list changes.
+
+---
+
+### Task 37 – Implement `ReportsView` UI and logic
+
+**Goal:** Show simple statistics from tasks.
+
+- In `taskmaster/gui/reports_view.py`:
+  - Implement `class ReportsView(tk.Toplevel)`:
+    - On init:
+      - Read tasks from `app_state.tasks`.
+      - Use `count_by_status` and `count_by_category` to compute stats.
+      - Display them as labels (e.g., “Pending: X”, “Completed: Y” and each category count).
+    - Add a “Close” button to destroy the window.
+
+**Verify:**  
+From a test script or from `MainView`, open `ReportsView` with a few tasks created and confirm stats are shown.
+
+---
+
+### Task 38 – Wire “Reports” button in `MainView`
+
+**Goal:** Open the reports window from main view.
+
+- In `MainView`:
+  - Wire “Reports” button to:
+    - Open a new `ReportsView(self)`.
+
+**Verify:**  
+Run app, add some tasks, click “Reports”, and confirm stats appear in a new window.
+
+---
