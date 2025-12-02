@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from taskmaster.storage import get_tasks_for_user
 from taskmaster.app_state import app_state
+from taskmaster.gui.task_form import TaskForm
 
 
 class MainView(tk.Frame):
@@ -111,8 +112,8 @@ class MainView(tk.Frame):
         self.populate_tasks(app_state.tasks)
     
     def _on_add_task(self):
-        """Handle Add Task button (no logic yet)."""
-        pass
+        """Handle Add Task button."""
+        TaskForm(self, on_save=self.refresh_tasks)
     
     def _on_edit_task(self):
         """Handle Edit Task button (no logic yet)."""
