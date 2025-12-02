@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk
-from taskmaster.storage import get_tasks_for_user
+from taskmaster.storage import get_tasks_for_user, delete_task
 from taskmaster.app_state import app_state
 from taskmaster.gui.task_form import TaskForm
 
@@ -139,12 +139,29 @@ class MainView(tk.Frame):
         TaskForm(self, on_save=self.refresh_tasks)
     
     def _on_edit_task(self):
-        """Handle Edit Task button (no logic yet)."""
-        pass
+        """Handle Edit Task button."""
+        # Get selected task
+        selected_task = self.get_selected_task()
+        
+        # If a task is selected, open TaskForm in edit mode
+        if selected_task:
+            TaskForm(self, task=selected_task, on_save=self.refresh_tasks)
     
     def _on_delete_task(self):
-        """Handle Delete Task button (no logic yet)."""
-        pass
+        """Handle Delete Task button."""
+        # Get selected task
+        selected_task = self.get_selected_task()
+        
+        # If a task is selected, delete it
+        if selected_task:
+            # Delete from database
+            delete_task(selected_task.id)
+            
+            # Remove from app_state.tasks
+            app_state.tasks.remove(selected_task)
+            
+            # Refresh the view
+            self.populate_tasks(app_state.tasks)
     
     def _on_complete_task(self):
         """Handle Complete Task button (no logic yet)."""
