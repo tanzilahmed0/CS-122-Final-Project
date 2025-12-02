@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk
-from taskmaster.storage import get_tasks_for_user, delete_task
+from taskmaster.storage import get_tasks_for_user, delete_task, update_task
 from taskmaster.app_state import app_state
 from taskmaster.gui.task_form import TaskForm
 
@@ -103,13 +103,36 @@ class MainView(tk.Frame):
                 task.category or ""
             ))
     
+    def get_filtered_tasks(self):
+        """
+        Filter tasks based on status and priority filters.
+        
+        Returns:
+            list[Task]: Filtered list of tasks
+        """
+        # Start with all tasks
+        filtered = app_state.tasks[:]
+        
+        # Filter by status
+        status_filter = self.status_filter.get()
+        if status_filter != "All":
+            filtered = [t for t in filtered if t.status == status_filter]
+        
+        # Filter by priority
+        priority_filter = self.priority_filter.get()
+        if priority_filter != "All":
+            filtered = [t for t in filtered if t.priority == priority_filter]
+        
+        return filtered
+    
     def refresh_tasks(self):
         """Reload tasks from database and update the view."""
         # Reload tasks from database
         app_state.tasks = get_tasks_for_user(app_state.current_user.id)
         
-        # Update the display
-        self.populate_tasks(app_state.tasks)
+        # Get filtered tasks and update the display
+        filtered_tasks = self.get_filtered_tasks()
+        self.populate_tasks(filtered_tasks)
     
     def get_selected_task(self):
         """
@@ -164,8 +187,20 @@ class MainView(tk.Frame):
             self.populate_tasks(app_state.tasks)
     
     def _on_complete_task(self):
-        """Handle Complete Task button (no logic yet)."""
-        pass
+        """Handle Complete Task button."""
+        # Get selected task
+        selected_task = self.get_selected_task()
+        
+        # If a task is selected, mark it as completed
+        if selected_task:
+            # Mark task as completed (also calls touch())
+            selected_task.mark_completed()
+            
+            # Update in database
+            update_task(selected_task)
+            
+            # Refresh the view
+            self.refresh_tasks()
     
     def _on_refresh(self):
         """Handle Refresh button."""
