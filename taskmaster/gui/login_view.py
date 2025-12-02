@@ -34,8 +34,15 @@ class LoginView(tk.Frame):
         self.username_entry.pack(pady=10)
         
         # Login button
-        login_button = tk.Button(self, text="Login", font=("Arial", 12), command=self._on_login_click)
-        login_button.pack(pady=20)
+        login_button = tk.Button(
+            self, 
+            text="Login", 
+            font=("Arial", 12, "bold"), 
+            command=self._on_login_click,
+            relief=tk.RAISED,
+            bd=3
+        )
+        login_button.pack(pady=20, ipadx=40, ipady=10)
     
     def _on_login_click(self):
         """Handle login button click."""

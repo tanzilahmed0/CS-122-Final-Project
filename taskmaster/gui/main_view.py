@@ -5,6 +5,7 @@ from tkinter import ttk
 from taskmaster.storage import get_tasks_for_user, delete_task, update_task
 from taskmaster.app_state import app_state
 from taskmaster.gui.task_form import TaskForm
+from taskmaster.gui.reports_view import ReportsView
 
 
 class MainView(tk.Frame):
@@ -27,16 +28,16 @@ class MainView(tk.Frame):
         filter_frame.pack(fill=tk.X, padx=10, pady=10)
         
         # Status filter
-        tk.Label(filter_frame, text="Status:").pack(side=tk.LEFT, padx=5)
-        self.status_filter = ttk.Combobox(filter_frame, values=["All", "Pending", "Completed"], state="readonly", width=15)
+        tk.Label(filter_frame, text="Status:", font=("Arial", 10)).pack(side=tk.LEFT, padx=5)
+        self.status_filter = ttk.Combobox(filter_frame, values=["All", "Pending", "Completed"], state="readonly", width=15, font=("Arial", 10), height=10)
         self.status_filter.set("All")
-        self.status_filter.pack(side=tk.LEFT, padx=5)
+        self.status_filter.pack(side=tk.LEFT, padx=5, ipady=3)
         
         # Priority filter
-        tk.Label(filter_frame, text="Priority:").pack(side=tk.LEFT, padx=5)
-        self.priority_filter = ttk.Combobox(filter_frame, values=["All", "Low", "Medium", "High"], state="readonly", width=15)
+        tk.Label(filter_frame, text="Priority:", font=("Arial", 10)).pack(side=tk.LEFT, padx=5)
+        self.priority_filter = ttk.Combobox(filter_frame, values=["All", "Low", "Medium", "High"], state="readonly", width=15, font=("Arial", 10), height=10)
         self.priority_filter.set("All")
-        self.priority_filter.pack(side=tk.LEFT, padx=5)
+        self.priority_filter.pack(side=tk.LEFT, padx=5, ipady=3)
         
         # Treeview for task list
         tree_frame = tk.Frame(self)
@@ -70,13 +71,20 @@ class MainView(tk.Frame):
         button_frame = tk.Frame(self)
         button_frame.pack(fill=tk.X, padx=10, pady=10)
         
-        # Buttons
-        tk.Button(button_frame, text="Add Task", command=self._on_add_task).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Edit Task", command=self._on_edit_task).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Delete Task", command=self._on_delete_task).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Complete Task", command=self._on_complete_task).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Refresh", command=self._on_refresh).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Reports", command=self._on_reports).pack(side=tk.LEFT, padx=5)
+        # Button styling
+        button_config = {
+            'font': ('Arial', 10, 'bold'),
+            'relief': tk.RAISED,
+            'bd': 2
+        }
+        
+        # Buttons with internal padding for better clickability
+        tk.Button(button_frame, text="Add Task", command=self._on_add_task, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
+        tk.Button(button_frame, text="Edit Task", command=self._on_edit_task, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
+        tk.Button(button_frame, text="Delete Task", command=self._on_delete_task, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
+        tk.Button(button_frame, text="Complete Task", command=self._on_complete_task, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
+        tk.Button(button_frame, text="Refresh", command=self._on_refresh, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
+        tk.Button(button_frame, text="Reports", command=self._on_reports, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
     
     def populate_tasks(self, tasks):
         """
@@ -207,6 +215,6 @@ class MainView(tk.Frame):
         self.refresh_tasks()
     
     def _on_reports(self):
-        """Handle Reports button (no logic yet)."""
-        pass
+        """Handle Reports button."""
+        ReportsView(self)
 

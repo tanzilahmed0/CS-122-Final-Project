@@ -8,6 +8,11 @@ from taskmaster.storage import create_task, update_task
 from taskmaster.app_state import app_state
 from taskmaster.utils import parse_due_date
 
+# Configure ttk style for better combobox appearance
+style = ttk.Style()
+style.theme_use('default')
+style.configure('TCombobox', padding=5)
+
 
 class TaskForm(tk.Toplevel):
     """Dialog to add or edit a task."""
@@ -26,7 +31,7 @@ class TaskForm(tk.Toplevel):
         self.task = task
         
         self.title("Add Task" if task is None else "Edit Task")
-        self.geometry("400x400")
+        self.geometry("550x650")
         
         self._build_ui()
         
@@ -37,37 +42,46 @@ class TaskForm(tk.Toplevel):
     def _build_ui(self):
         """Build the task form UI."""
         # Title field
-        tk.Label(self, text="Title:", font=("Arial", 10)).pack(pady=(10, 0), padx=10, anchor=tk.W)
-        self.title_entry = tk.Entry(self, font=("Arial", 10), width=40)
-        self.title_entry.pack(pady=5, padx=10)
+        tk.Label(self, text="Title:", font=("Arial", 11, "bold")).pack(pady=(15, 5), padx=20, anchor=tk.W)
+        self.title_entry = tk.Entry(self, font=("Arial", 11), relief=tk.SOLID, bd=2)
+        self.title_entry.pack(pady=5, padx=20, fill=tk.X, ipady=6)
         
         # Description field
-        tk.Label(self, text="Description:", font=("Arial", 10)).pack(pady=(10, 0), padx=10, anchor=tk.W)
-        self.description_text = tk.Text(self, font=("Arial", 10), width=40, height=5)
-        self.description_text.pack(pady=5, padx=10)
+        tk.Label(self, text="Description:", font=("Arial", 11, "bold")).pack(pady=(15, 5), padx=20, anchor=tk.W)
+        self.description_text = tk.Text(self, font=("Arial", 11), relief=tk.SOLID, bd=2, height=6, wrap=tk.WORD)
+        self.description_text.pack(pady=5, padx=20, fill=tk.BOTH, expand=True)
         
         # Due date field
-        tk.Label(self, text="Due Date (YYYY-MM-DD):", font=("Arial", 10)).pack(pady=(10, 0), padx=10, anchor=tk.W)
-        self.due_date_entry = tk.Entry(self, font=("Arial", 10), width=40)
-        self.due_date_entry.pack(pady=5, padx=10)
+        tk.Label(self, text="Due Date (YYYY-MM-DD):", font=("Arial", 11, "bold")).pack(pady=(15, 5), padx=20, anchor=tk.W)
+        self.due_date_entry = tk.Entry(self, font=("Arial", 11), relief=tk.SOLID, bd=2)
+        self.due_date_entry.pack(pady=5, padx=20, fill=tk.X, ipady=6)
         
         # Priority dropdown
-        tk.Label(self, text="Priority:", font=("Arial", 10)).pack(pady=(10, 0), padx=10, anchor=tk.W)
-        self.priority_combo = ttk.Combobox(self, values=PRIORITIES, state="readonly", font=("Arial", 10), width=38)
+        tk.Label(self, text="Priority:", font=("Arial", 11, "bold")).pack(pady=(15, 5), padx=20, anchor=tk.W)
+        priority_frame = tk.Frame(self, relief=tk.SOLID, bd=2)
+        priority_frame.pack(pady=5, padx=20, fill=tk.X)
+        self.priority_combo = ttk.Combobox(priority_frame, values=PRIORITIES, state="readonly", font=("Arial", 12), height=10)
         self.priority_combo.set("Medium")
-        self.priority_combo.pack(pady=5, padx=10)
+        self.priority_combo.pack(fill=tk.BOTH, expand=True, ipady=8, padx=2, pady=2)
         
         # Category field
-        tk.Label(self, text="Category:", font=("Arial", 10)).pack(pady=(10, 0), padx=10, anchor=tk.W)
-        self.category_entry = tk.Entry(self, font=("Arial", 10), width=40)
-        self.category_entry.pack(pady=5, padx=10)
+        tk.Label(self, text="Category:", font=("Arial", 11, "bold")).pack(pady=(15, 5), padx=20, anchor=tk.W)
+        self.category_entry = tk.Entry(self, font=("Arial", 11), relief=tk.SOLID, bd=2)
+        self.category_entry.pack(pady=5, padx=20, fill=tk.X, ipady=6)
         
         # Buttons frame
         button_frame = tk.Frame(self)
         button_frame.pack(pady=20)
         
-        tk.Button(button_frame, text="Save", font=("Arial", 10), command=self._on_save_click, width=10).pack(side=tk.LEFT, padx=5)
-        tk.Button(button_frame, text="Cancel", font=("Arial", 10), command=self._on_cancel_click, width=10).pack(side=tk.LEFT, padx=5)
+        # Button styling
+        button_config = {
+            'font': ('Arial', 11, 'bold'),
+            'relief': tk.RAISED,
+            'bd': 2
+        }
+        
+        tk.Button(button_frame, text="Save", command=self._on_save_click, bg='#4CAF50', fg='black', **button_config).pack(side=tk.LEFT, padx=5, ipadx=20, ipady=8)
+        tk.Button(button_frame, text="Cancel", command=self._on_cancel_click, **button_config).pack(side=tk.LEFT, padx=5, ipadx=20, ipady=8)
     
     def _populate_fields(self):
         """Pre-fill fields with task data for edit mode."""
