@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from taskmaster.config import PRIORITIES
 from taskmaster.models import Task
-from taskmaster.storage import create_task
+from taskmaster.storage import create_task, update_task
 from taskmaster.app_state import app_state
 from taskmaster.utils import parse_due_date
 
@@ -29,6 +29,10 @@ class TaskForm(tk.Toplevel):
         self.geometry("400x400")
         
         self._build_ui()
+        
+        # If editing, pre-fill fields
+        if self.task is not None:
+            self._populate_fields()
     
     def _build_ui(self):
         """Build the task form UI."""
@@ -65,14 +69,33 @@ class TaskForm(tk.Toplevel):
         tk.Button(button_frame, text="Save", font=("Arial", 10), command=self._on_save_click, width=10).pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="Cancel", font=("Arial", 10), command=self._on_cancel_click, width=10).pack(side=tk.LEFT, padx=5)
     
+    def _populate_fields(self):
+        """Pre-fill fields with task data for edit mode."""
+        # Set title
+        self.title_entry.insert(0, self.task.title)
+        
+        # Set description
+        self.description_text.insert("1.0", self.task.description)
+        
+        # Set due date
+        if self.task.due_date:
+            self.due_date_entry.insert(0, self.task.due_date.strftime("%Y-%m-%d"))
+        
+        # Set priority
+        self.priority_combo.set(self.task.priority)
+        
+        # Set category
+        if self.task.category:
+            self.category_entry.insert(0, self.task.category)
+    
     def _on_save_click(self):
         """Handle Save button click."""
         if self.task is None:
             # Add mode: create new task
             self._save_new_task()
         else:
-            # Edit mode: update existing task (not implemented yet)
-            pass
+            # Edit mode: update existing task
+            self._update_existing_task()
     
     def _save_new_task(self):
         """Create a new task and save to database."""
@@ -106,6 +129,42 @@ class TaskForm(tk.Toplevel):
         
         # Add to app state
         app_state.tasks.append(task)
+        
+        # Call on_save callback if provided
+        if self.on_save:
+            self.on_save()
+        
+        # Close dialog
+        self.destroy()
+    
+    def _update_existing_task(self):
+        """Update an existing task in the database."""
+        # Read fields
+        title = self.title_entry.get().strip()
+        description = self.description_text.get("1.0", tk.END).strip()
+        due_date_str = self.due_date_entry.get().strip()
+        priority = self.priority_combo.get()
+        category = self.category_entry.get().strip()
+        
+        # Validate title
+        if not title:
+            return
+        
+        # Parse due date
+        due_date = parse_due_date(due_date_str)
+        
+        # Update task attributes
+        self.task.title = title
+        self.task.description = description
+        self.task.due_date = due_date
+        self.task.priority = priority
+        self.task.category = category
+        
+        # Call touch to update timestamp
+        self.task.touch()
+        
+        # Save to database
+        update_task(self.task)
         
         # Call on_save callback if provided
         if self.on_save:

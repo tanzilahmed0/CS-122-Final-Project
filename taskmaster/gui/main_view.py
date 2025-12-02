@@ -111,6 +111,29 @@ class MainView(tk.Frame):
         # Update the display
         self.populate_tasks(app_state.tasks)
     
+    def get_selected_task(self):
+        """
+        Get the Task object for the selected row.
+        
+        Returns:
+            Task object if a row is selected, None otherwise
+        """
+        # Get selected item from Treeview
+        selection = self.tree.selection()
+        if not selection:
+            return None
+        
+        # Get the task_id from the selected item
+        task_id_str = selection[0]
+        task_id = int(task_id_str)
+        
+        # Find the corresponding Task in app_state.tasks
+        for task in app_state.tasks:
+            if task.id == task_id:
+                return task
+        
+        return None
+    
     def _on_add_task(self):
         """Handle Add Task button."""
         TaskForm(self, on_save=self.refresh_tasks)
