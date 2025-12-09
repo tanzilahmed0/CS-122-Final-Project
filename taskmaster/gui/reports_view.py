@@ -13,8 +13,6 @@ class ReportsView(tk.Toplevel):
         """
         Initialize ReportsView.
         
-        Args:
-            parent: Parent widget
         """
         super().__init__(parent)
         self.title("Task Reports")

@@ -11,10 +11,6 @@ class BaseModel:
         """
         Initialize base model with common fields.
         
-        Args:
-            id: Unique identifier (set by database)
-            created_at: Creation timestamp
-            updated_at: Last update timestamp
         """
         self.id = id
         self.created_at = created_at or datetime.utcnow()
@@ -27,9 +23,6 @@ class BaseModel:
     def to_dict(self):
         """
         Return a dictionary representation of base fields.
-        
-        Returns:
-            dict: Dictionary containing id, created_at, updated_at
         """
         return {
             'id': self.id,
@@ -45,12 +38,6 @@ class User(BaseModel):
         """
         Initialize a User.
         
-        Args:
-            username: Username (will be normalized)
-            display_name: Display name for the user
-            id: Unique identifier (set by database)
-            created_at: Creation timestamp
-            updated_at: Last update timestamp
         """
         super().__init__(id, created_at, updated_at)
         self.username = username.strip().lower() if username else ""
@@ -71,17 +58,6 @@ class Task(BaseModel):
         """
         Initialize a Task.
         
-        Args:
-            user_id: ID of the user who owns this task
-            title: Task title
-            description: Task description
-            due_date: Due date (datetime object or None)
-            priority: Priority level (validated against config.PRIORITIES)
-            status: Task status (validated against config.STATUSES)
-            category: Task category
-            id: Unique identifier (set by database)
-            created_at: Creation timestamp
-            updated_at: Last update timestamp
         """
         super().__init__(id, created_at, updated_at)
         self.user_id = user_id
@@ -89,10 +65,10 @@ class Task(BaseModel):
         self.description = description
         self.due_date = due_date
         
-        # Validate priority, fallback to "Medium"
+        # Validate priority
         self.priority = priority if priority in config.PRIORITIES else "Medium"
         
-        # Validate status, fallback to "Pending"
+        # Validate status
         self.status = status if status in config.STATUSES else "Pending"
         
         self.category = category
@@ -105,12 +81,7 @@ class Task(BaseModel):
     def is_overdue(self, now):
         """
         Check if this task is overdue.
-        
-        Args:
-            now: Current datetime to compare against
-            
-        Returns:
-            bool: True if task is not completed and past due date
+     
         """
         if self.status == "Completed":
             return False

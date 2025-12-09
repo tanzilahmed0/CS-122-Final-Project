@@ -8,11 +8,6 @@ from taskmaster.storage import create_task, update_task
 from taskmaster.app_state import app_state
 from taskmaster.utils import parse_due_date
 
-# Configure ttk style for better combobox appearance
-style = ttk.Style()
-style.theme_use('default')
-style.configure('TCombobox', padding=5)
-
 
 class TaskForm(tk.Toplevel):
     """Dialog to add or edit a task."""
@@ -21,10 +16,6 @@ class TaskForm(tk.Toplevel):
         """
         Initialize TaskForm.
         
-        Args:
-            parent: Parent widget
-            on_save: Callback function to call after saving
-            task: Task object to edit (None for add mode)
         """
         super().__init__(parent)
         self.on_save = on_save
@@ -52,7 +43,7 @@ class TaskForm(tk.Toplevel):
         self.description_text.pack(pady=5, padx=20, fill=tk.BOTH, expand=True)
         
         # Due date field
-        tk.Label(self, text="Due Date (YYYY-MM-DD):", font=("Arial", 11, "bold")).pack(pady=(15, 5), padx=20, anchor=tk.W)
+        tk.Label(self, text="Due Date (MM/DD/YYYY):", font=("Arial", 11, "bold")).pack(pady=(15, 5), padx=20, anchor=tk.W)
         self.due_date_entry = tk.Entry(self, font=("Arial", 11), relief=tk.SOLID, bd=2)
         self.due_date_entry.pack(pady=5, padx=20, fill=tk.X, ipady=6)
         
@@ -93,7 +84,7 @@ class TaskForm(tk.Toplevel):
         
         # Set due date
         if self.task.due_date:
-            self.due_date_entry.insert(0, self.task.due_date.strftime("%Y-%m-%d"))
+            self.due_date_entry.insert(0, self.task.due_date.strftime("%m/%d/%Y"))
         
         # Set priority
         self.priority_combo.set(self.task.priority)

@@ -15,7 +15,7 @@ def parse_due_date(text: str):
     Convert string input into a datetime or None.
     
     Args:
-        text: Date string in format YYYY-MM-DD
+        text: Date string in format MM/DD/YYYY
         
     Returns:
         datetime object or None if invalid/empty
@@ -24,7 +24,7 @@ def parse_due_date(text: str):
         return None
     
     try:
-        return datetime.strptime(text.strip(), "%Y-%m-%d")
+        return datetime.strptime(text.strip(), "%m/%d/%Y")
     except ValueError:
         return None
 

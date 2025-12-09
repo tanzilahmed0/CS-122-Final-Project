@@ -10,10 +10,9 @@ class DatabaseManager:
     
     def __init__(self, db_path: str):
         """
-        Initialize DatabaseManager with a database path.
+        Initialize DatabaseManager with database path
         
-        Args:
-            db_path: Path to the SQLite database file
+
         """
         self.db_path = db_path
     
@@ -21,15 +20,13 @@ class DatabaseManager:
         """
         Get a connection to the SQLite database.
         
-        Returns:
-            sqlite3.Connection: Database connection object
+
         """
         return sqlite3.connect(self.db_path)
     
     def init_db(self):
         """
         Initialize the database by creating tables if they don't exist.
-        Ensures the data directory exists first.
         """
         # Ensure data directory exists
         os.makedirs(DATA_DIR, exist_ok=True)
@@ -69,7 +66,7 @@ class DatabaseManager:
         conn.close()
 
 
-# Module-level database manager instance
+
 db_manager = DatabaseManager(DB_PATH)
 
 
@@ -77,11 +74,6 @@ def create_user(user):
     """
     Insert a new user into the database.
     
-    Args:
-        user: User object to insert
-        
-    Returns:
-        User: The user object with id set from database
     """
     conn = db_manager.get_connection()
     cursor = conn.cursor()
@@ -103,11 +95,6 @@ def get_user_by_username(username):
     """
     Fetch a user by username.
     
-    Args:
-        username: Username to search for
-        
-    Returns:
-        User object if found, None otherwise
     """
     from taskmaster.models import User
     
@@ -139,11 +126,6 @@ def create_task(task):
     """
     Insert a new task into the database.
     
-    Args:
-        task: Task object to insert
-        
-    Returns:
-        Task: The task object with id set from database
     """
     conn = db_manager.get_connection()
     cursor = conn.cursor()
@@ -166,11 +148,6 @@ def get_tasks_for_user(user_id):
     """
     Load all tasks for a given user.
     
-    Args:
-        user_id: ID of the user whose tasks to retrieve
-        
-    Returns:
-        list[Task]: List of Task objects for the user
     """
     from taskmaster.models import Task
     from datetime import datetime
@@ -217,9 +194,6 @@ def get_tasks_for_user(user_id):
 def update_task(task):
     """
     Update an existing task in the database.
-    
-    Args:
-        task: Task object with updated values (must have id set)
     """
     conn = db_manager.get_connection()
     cursor = conn.cursor()
@@ -240,8 +214,6 @@ def delete_task(task_id):
     """
     Delete a task by id.
     
-    Args:
-        task_id: ID of the task to delete
     """
     conn = db_manager.get_connection()
     cursor = conn.cursor()

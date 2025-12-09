@@ -5,11 +5,6 @@ def count_by_status(tasks):
     """
     Compute status counts from a list of tasks.
     
-    Args:
-        tasks: List of Task objects
-        
-    Returns:
-        dict: Dictionary mapping status to count (e.g., {"Pending": 5, "Completed": 3})
     """
     counts = {}
     
@@ -27,11 +22,6 @@ def count_by_category(tasks):
     """
     Compute category counts from a list of tasks.
     
-    Args:
-        tasks: List of Task objects
-        
-    Returns:
-        dict: Dictionary mapping category to count (e.g., {"School": 3, "Work": 2})
     """
     counts = {}
     

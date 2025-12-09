@@ -1,4 +1,4 @@
-# Tk root, main loop, screen switching
+
 
 import tkinter as tk
 from taskmaster.storage import db_manager, get_tasks_for_user
@@ -8,15 +8,16 @@ from taskmaster.app_state import app_state
 
 
 def main():
-    """Main entry point for the GUI application."""
+    """Main entry point for the GUI app"""
     # Initialize database before starting GUI
     db_manager.init_db()
     
-    # Create the root window
+    # Root Window
     root = tk.Tk()
     root.title("Task Master")
+    root.geometry("600x400")
     
-    # Define callback for successful login
+
     def on_login_success():
         # Load tasks for the current user
         app_state.tasks = get_tasks_for_user(app_state.current_user.id)
@@ -24,6 +25,8 @@ def main():
         # Hide/destroy LoginView
         login_view.pack_forget()
         login_view.destroy()
+        
+        root.geometry("700x600")
         
         # Create and display MainView
         main_view = MainView(root)
@@ -36,6 +39,6 @@ def main():
     login_view = LoginView(root, on_login_success=on_login_success)
     login_view.pack(fill=tk.BOTH, expand=True)
     
-    # Start the main event loop
+    # Start  main event loop
     root.mainloop()
 

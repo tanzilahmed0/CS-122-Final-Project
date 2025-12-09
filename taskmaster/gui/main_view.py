@@ -9,14 +9,12 @@ from taskmaster.gui.reports_view import ReportsView
 
 
 class MainView(tk.Frame):
-    """Main task list view with CRUD operations and filters."""
+    """Main task list view with CRUD and filters."""
     
     def __init__(self, parent):
         """
         Initialize MainView.
         
-        Args:
-            parent: Parent widget
         """
         super().__init__(parent)
         self._build_ui()
@@ -78,7 +76,6 @@ class MainView(tk.Frame):
             'bd': 2
         }
         
-        # Buttons with internal padding for better clickability
         tk.Button(button_frame, text="Add Task", command=self._on_add_task, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
         tk.Button(button_frame, text="Edit Task", command=self._on_edit_task, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
         tk.Button(button_frame, text="Delete Task", command=self._on_delete_task, **button_config).pack(side=tk.LEFT, padx=5, pady=5, ipadx=10, ipady=5)
@@ -90,8 +87,6 @@ class MainView(tk.Frame):
         """
         Display a list of tasks in the Treeview.
         
-        Args:
-            tasks: List of Task objects to display
         """
         # Clear existing rows
         for item in self.tree.get_children():
@@ -99,8 +94,8 @@ class MainView(tk.Frame):
         
         # Insert new rows
         for task in tasks:
-            # Format due date
-            due_date_str = task.due_date.strftime("%Y-%m-%d") if task.due_date else ""
+    
+            due_date_str = task.due_date.strftime("%m/%d/%Y") if task.due_date else ""
             
             # Insert row with task data
             self.tree.insert("", tk.END, iid=str(task.id), values=(
@@ -114,9 +109,7 @@ class MainView(tk.Frame):
     def get_filtered_tasks(self):
         """
         Filter tasks based on status and priority filters.
-        
-        Returns:
-            list[Task]: Filtered list of tasks
+
         """
         # Start with all tasks
         filtered = app_state.tasks[:]
@@ -135,7 +128,7 @@ class MainView(tk.Frame):
     
     def refresh_tasks(self):
         """Reload tasks from database and update the view."""
-        # Reload tasks from database
+      
         app_state.tasks = get_tasks_for_user(app_state.current_user.id)
         
         # Get filtered tasks and update the display
@@ -145,9 +138,7 @@ class MainView(tk.Frame):
     def get_selected_task(self):
         """
         Get the Task object for the selected row.
-        
-        Returns:
-            Task object if a row is selected, None otherwise
+  
         """
         # Get selected item from Treeview
         selection = self.tree.selection()
@@ -180,7 +171,7 @@ class MainView(tk.Frame):
     
     def _on_delete_task(self):
         """Handle Delete Task button."""
-        # Get selected task
+
         selected_task = self.get_selected_task()
         
         # If a task is selected, delete it
@@ -188,7 +179,7 @@ class MainView(tk.Frame):
             # Delete from database
             delete_task(selected_task.id)
             
-            # Remove from app_state.tasks
+            
             app_state.tasks.remove(selected_task)
             
             # Refresh the view
@@ -196,12 +187,12 @@ class MainView(tk.Frame):
     
     def _on_complete_task(self):
         """Handle Complete Task button."""
-        # Get selected task
+
         selected_task = self.get_selected_task()
         
         # If a task is selected, mark it as completed
         if selected_task:
-            # Mark task as completed (also calls touch())
+            # Mark task as completed 
             selected_task.mark_completed()
             
             # Update in database
